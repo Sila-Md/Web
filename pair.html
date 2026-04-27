@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silatrix Bot - Pairing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        
+        .logo p {
+            color: #764ba2;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .result.success {
+            display: block;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            display: block;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result.info {
+            display: block;
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .code {
+            font-size: 36px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 5px;
+            margin: 20px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+        
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .steps {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .steps ol {
+            margin-left: 20px;
+        }
+        
+        .steps li {
+            margin-bottom: 5px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🤖 Silatrix Bot</h1>
+            <p>WhatsApp Multi-Device Pairing</p>
+        </div>
+        
+        <div class="form-group">
+            <label for="number">Phone Number (with country code)</label>
+            <input 
+                type="text" 
+                id="number" 
+                placeholder="Example: 255789661031"
+                maxlength="15"
+            >
+        </div>
+        
+        <button id="pairBtn" onclick="startPairing()">
+            🔗 Get Pairing Code
+        </button>
+        
+        <div id="loader" class="loader" style="display: none;"></div>
+        <div id="result" class="result"></div>
+        
+        <div class="steps" id="steps" style="display: none;">
+            <h4>📋 How to Connect:</h4>
+            <ol>
+                <li>Open WhatsApp on your phone</li>
+                <li>Go to <strong>Settings → Linked Devices</strong></li>
+                <li>Tap <strong>Link a Device</strong></li>
+                <li>Enter the pairing code shown above</li>
+                <li>Wait for connection confirmation</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        async function startPairing() {
+            const number = document.getElementById('number').value.trim();
+            const btn = document.getElementById('pairBtn');
+            const loader = document.getElementById('loader');
+            const result = document.getElementById('result');
+            const steps = document.getElementById('steps');
+            
+            if (!number) {
+                showResult('Please enter a phone number', 'error');
+                return;
+            }
+            
+            if (number.length < 9) {
+                showResult('Please enter a valid phone number with country code', 'error');
+                return;
+            }
+            
+            // Show loading
+            btn.disabled = true;
+            loader.style.display = 'block';
+            result.className = 'result';
+            result.style.display = 'none';
+            steps.style.display = 'none';
+            
+            try {
+                const response = await fetch(`/code?number=${number}`);
+                const data = await response.json();
+                
+                loader.style.display = 'none';
+                btn.disabled = false;
+                
+                if (data.code) {
+                    result.innerHTML = `
+                        <h3>✅ Pairing Code Generated!</h3>
+                        <div class="code">${data.code}</div>
+                        <p>This code is valid for 20 seconds only!</p>
+                    `;
+                    result.className = 'result success';
+                    steps.style.display = 'block';
+                } else if (data.status === 'already_connected') {
+                    result.innerHTML = `
+                        <h3>✅ Already Connected!</h3>
+                        <p>${data.message}</p>
+                        <p>Uptime: ${data.uptime}</p>
+                    `;
+                    result.className = 'result info';
+                } else if (data.status === 'reconnecting') {
+                    result.innerHTML = `
+                        <h3>🔄 Reconnecting...</h3>
+                        <p>${data.message}</p>
+                    `;
+                    result.className = 'result info';
+                } else if (data.error) {
+                    result.innerHTML = `
+                        <h3>❌ Error</h3>
+                        <p>${data.error}</p>
+                        <p>${data.details || ''}</p>
+                    `;
+                    result.className = 'result error';
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                btn.disabled = false;
+                showResult('Failed to connect. Please try again.', 'error');
+            }
+        }
+        
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.innerHTML = `<p>${message}</p>`;
+            result.className = `result ${type}`;
+        }
+        
+        // Auto-format number
+        document.getElementById('number').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+</body>
+</html>
